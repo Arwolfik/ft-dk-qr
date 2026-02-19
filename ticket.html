@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+<title>Мой билет — CareerDay</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #F4F4F4;
+    --orange: #F46D00;
+    --orange-dark: #d45e00;
+    --orange-light: rgba(244, 109, 0, 0.10);
+    --white: #FFFFFF;
+    --text: #333333;
+    --muted: #888888;
+    --border: #E8E8E8;
+    --radius: 14px;
+    --shadow: 0 2px 12px rgba(0,0,0,0.07);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Golos Text', sans-serif;
+    min-height: 100vh;
+    padding-bottom: 40px;
+  }
+
+  .header {
+    background: var(--white);
+    box-shadow: var(--shadow);
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  .header-icon {
+    width: 40px; height: 40px;
+    background: var(--orange);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+    flex-shrink: 0;
+  }
+  .header-title { font-size: 17px; font-weight: 700; line-height: 1.2; }
+  .header-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+  .content {
+    padding: 20px 16px 0;
+    max-width: 520px;
+    margin: 0 auto;
+  }
+
+  .state { display: none; }
+  .state.active {
+    display: block;
+    animation: fadeUp 0.3s ease both;
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .card {
+    background: var(--white);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 24px 20px;
+  }
+  .card h2 { font-size: 18px; font-weight: 700; margin-bottom: 6px; }
+  .card p { font-size: 14px; color: var(--muted); margin-bottom: 20px; line-height: 1.55; }
+
+  .input-group { margin-bottom: 4px; }
+  .input-group input {
+    width: 100%;
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    padding: 13px 16px;
+    font-family: 'Golos Text', sans-serif;
+    font-size: 15px;
+    color: var(--text);
+    background: var(--bg);
+    outline: none;
+    transition: border-color 0.2s, background 0.2s;
+  }
+  .input-group input:focus {
+    border-color: var(--orange);
+    background: var(--white);
+  }
+  .input-group input::placeholder { color: #bbb; }
+  .input-group input.invalid { border-color: #e03e3e; }
+
+  .input-hint {
+    font-size: 12px;
+    color: #e03e3e;
+    margin: 5px 0 14px 4px;
+    min-height: 16px;
+  }
+
+  .btn {
+    border: none;
+    border-radius: 10px;
+    padding: 14px;
+    font-family: 'Golos Text', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.1s;
+    display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+  }
+  .btn:active { transform: scale(0.98); }
+  .btn-primary { background: var(--orange); color: #fff; width: 100%; }
+  .btn-primary:hover { background: var(--orange-dark); }
+  .btn-primary:disabled { background: #ccc; cursor: not-allowed; transform: none; }
+  .btn-ghost {
+    background: var(--orange-light);
+    color: var(--orange);
+    padding: 10px 18px;
+    margin-top: 14px;
+    font-size: 14px;
+  }
+  .btn-ghost:hover { background: rgba(244,109,0,0.18); }
+
+  .loader-wrap {
+    display: flex; flex-direction: column;
+    align-items: center; padding: 60px 0; gap: 14px;
+  }
+  .spinner {
+    width: 36px; height: 36px;
+    border: 3px solid var(--border);
+    border-top-color: var(--orange);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loader-text { font-size: 14px; color: var(--muted); }
+
+  .not-found { text-align: center; padding: 6px 0 2px; }
+  .not-found .nf-icon { font-size: 46px; margin-bottom: 14px; }
+  .not-found h2 { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+  .not-found p { font-size: 14px; color: var(--muted); line-height: 1.6; }
+
+  .tickets-meta { margin-bottom: 16px; }
+  .tickets-meta h2 { font-size: 20px; font-weight: 700; }
+  .tickets-meta p { font-size: 13px; color: var(--muted); margin-top: 3px; }
+
+  .ticket {
+    background: var(--white);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    margin-bottom: 16px;
+    overflow: hidden;
+  }
+
+  .ticket-head {
+    background: var(--orange);
+    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .ticket-head-icon { font-size: 22px; }
+  .ticket-head-info { flex: 1; min-width: 0; }
+  .ticket-head-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.7);
+    margin-bottom: 2px;
+  }
+  .ticket-head-name {
+    font-size: 16px;
+    font-weight: 700;
+    color: #fff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .ticket-id-chip {
+    background: rgba(255,255,255,0.2);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 4px 9px;
+    border-radius: 6px;
+    flex-shrink: 0;
+  }
+
+  .ticket-body {
+    padding: 20px 18px;
+    display: flex;
+    gap: 18px;
+    align-items: center;
+  }
+
+  .qr-wrap {
+    flex-shrink: 0;
+    display: flex; flex-direction: column;
+    align-items: center; gap: 7px;
+  }
+  .qr-wrap img {
+    width: 130px; height: 130px;
+    border-radius: 8px;
+    border: 2px solid var(--border);
+    display: block;
+  }
+  .qr-caption {
+    font-size: 11px;
+    color: var(--muted);
+    text-align: center;
+    line-height: 1.4;
+    max-width: 130px;
+  }
+
+  .ticket-details { flex: 1; }
+  .detail-row { margin-bottom: 14px; }
+  .detail-row:last-child { margin-bottom: 0; }
+  .detail-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 3px;
+  }
+  .detail-value { font-size: 15px; font-weight: 600; color: var(--text); }
+  .detail-value.big { font-size: 22px; font-weight: 700; color: var(--orange); }
+
+  .perforation {
+    position: relative;
+    border-top: 2px dashed var(--border);
+    margin: 0 18px;
+  }
+  .perforation::before,
+  .perforation::after {
+    content: '';
+    position: absolute;
+    width: 20px; height: 20px;
+    background: var(--bg);
+    border-radius: 50%;
+    top: 50%; transform: translateY(-50%);
+  }
+  .perforation::before { left: -28px; }
+  .perforation::after  { right: -28px; }
+
+  .ticket-footer {
+    padding: 12px 18px;
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  .ticket-footer-dot {
+    width: 8px; height: 8px;
+    background: var(--orange);
+    border-radius: 50%;
+    flex-shrink: 0;
+    margin-top: 4px;
+  }
+  .ticket-footer-text {
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+
+  .error-card {
+    background: #fff5f5;
+    border: 1px solid #ffd6d6;
+    border-radius: var(--radius);
+    padding: 20px;
+    color: #c0392b;
+    font-size: 14px;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-icon">🎟</div>
+  <div>
+    <div class="header-title">Мой билет</div>
+    <div class="header-sub">CareerDay от FutureToday</div>
+  </div>
+</div>
+
+<div class="content">
+
+  <!-- Search -->
+  <div class="state active" id="state-search">
+    <div class="card">
+      <h2>Найти билет</h2>
+      <p>Введи email, который использовал при регистрации — мы найдём все твои билеты.</p>
+      <div class="input-group">
+        <input type="email" id="email-input" placeholder="example@mail.ru"
+               autocomplete="email" inputmode="email"
+               onkeydown="if(event.key==='Enter') doSearch()" />
+      </div>
+      <div class="input-hint" id="email-hint"></div>
+      <button class="btn btn-primary" id="search-btn" onclick="doSearch()">
+        🔍 Найти билет
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div class="state" id="state-loading">
+    <div class="loader-wrap">
+      <div class="spinner"></div>
+      <div class="loader-text">Ищем твои билеты...</div>
+    </div>
+  </div>
+
+  <!-- Not found -->
+  <div class="state" id="state-notfound">
+    <div class="card">
+      <div class="not-found">
+        <div class="nf-icon">🤔</div>
+        <h2>Билет не найден</h2>
+        <p>По этому email регистрация не найдена.<br/>Проверь адрес или зарегистрируйся на сайте careerday.fut.ru</p>
+      </div>
+      <button class="btn btn-ghost" onclick="goBack()">← Попробовать снова</button>
+    </div>
+  </div>
+
+  <!-- Error -->
+  <div class="state" id="state-error">
+    <div class="error-card" id="error-msg">Что-то пошло не так. Попробуй позже.</div>
+    <button class="btn btn-ghost" onclick="goBack()">← Назад</button>
+  </div>
+
+  <!-- Tickets -->
+  <div class="state" id="state-tickets">
+    <div class="tickets-meta">
+      <h2>Твои билеты</h2>
+      <p id="tickets-sub"></p>
+    </div>
+    <div id="tickets-container"></div>
+    <button class="btn btn-ghost" onclick="goBack()">← Искать по другому email</button>
+  </div>
+
+</div>
+
+<script>
+// ============================================================
+// КОНФИГУРАЦИЯ — замени токен на свой Baserow токен
+// ============================================================
+const BASEROW_TOKEN = "xveiGbETaUaK1ThxvnbgkmMm6lHPlCRm";
+const TABLE_ID = "794";
+const BASEROW_BASE = "https://api-br.fut.ru";
+// ============================================================
+
+const CD_NAMES = {
+  "ПФМ":  "ProFinance Москва",
+  "НИТМ": "Найди IT Москва",
+  "ТСМ":  "TechnoCareer",
+  "ПФС":  "ProFinance Санкт-Петербург",
+  "НИТС": "Найди IT Санкт-Петербург",
+  "НИТН": "Найди IT Новосибирск",
+  "ДОВ":  "День открытых вакансий",
+  "КЗКФ": "FutureToday Career Forum",
+};
+
+const CD_ICONS = {
+  "ПФМ": "💼", "НИТМ": "💻", "ТСМ": "🚀",
+  "ПФС": "💼", "НИТС": "💻", "НИТН": "💻",
+  "ДОВ": "🏢", "КЗКФ": "🌟",
+};
+
+function setState(id) {
+  document.querySelectorAll('.state').forEach(el => el.classList.remove('active'));
+  document.getElementById('state-' + id).classList.add('active');
+}
+
+function goBack() {
+  document.getElementById('email-input').value = '';
+  document.getElementById('email-hint').textContent = '';
+  document.getElementById('email-input').classList.remove('invalid');
+  setState('search');
+  setTimeout(() => document.getElementById('email-input').focus(), 100);
+}
+
+function isValidEmail(e) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(e.trim());
+}
+
+async function fetchRows(email) {
+  const url = `${BASEROW_BASE}/api/database/rows/table/${TABLE_ID}/`
+    + `?user_field_names=true&size=200`
+    + `&filter__email__equal=${encodeURIComponent(email.trim().toLowerCase())}`;
+
+  const resp = await fetch(url, {
+    headers: { "Authorization": `Token ${BASEROW_TOKEN}` }
+  });
+  if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+  const data = await resp.json();
+  return data.results || [];
+}
+
+function pluralEvents(n) {
+  if (n === 1) return 'Найдено 1 мероприятие';
+  if (n >= 2 && n <= 4) return `Найдено ${n} мероприятия`;
+  return `Найдено ${n} мероприятий`;
+}
+
+function renderTicket(row) {
+  const cd = (row.careerday || "").trim();
+  const name = CD_NAMES[cd] || cd;
+  const icon = CD_ICONS[cd] || "🎫";
+  const id = row.id;
+  const qrUrl = `https://quickchart.io/qr?text=${encodeURIComponent(String(id))}&size=130&margin=2`;
+
+  const ticket = document.createElement('div');
+  ticket.className = 'ticket';
+  ticket.innerHTML = `
+    <div class="ticket-head">
+      <span class="ticket-head-icon">${icon}</span>
+      <div class="ticket-head-info">
+        <div class="ticket-head-label">CareerDay</div>
+        <div class="ticket-head-name">${name}</div>
+      </div>
+      <div class="ticket-id-chip">#${id}</div>
+    </div>
+    <div class="ticket-body">
+      <div class="qr-wrap">
+        <img src="${qrUrl}" alt="QR-код" loading="lazy" />
+        <div class="qr-caption">Предъяви QR на входе</div>
+      </div>
+      <div class="ticket-details">
+        <div class="detail-row">
+          <div class="detail-label">Мероприятие</div>
+          <div class="detail-value">${name}</div>
+        </div>
+        <div class="detail-row">
+          <div class="detail-label">Номер билета</div>
+          <div class="detail-value big">#${id}</div>
+        </div>
+        ${row.firstname ? `<div class="detail-row">
+          <div class="detail-label">Участник</div>
+          <div class="detail-value">${row.firstname}</div>
+        </div>` : ''}
+      </div>
+    </div>
+    <div class="perforation"></div>
+    <div class="ticket-footer">
+      <div class="ticket-footer-dot"></div>
+      <div class="ticket-footer-text">Сканируй QR у организаторов и отметься на стенде FutureToday.</div>
+    </div>
+  `;
+  return ticket;
+}
+
+async function doSearch() {
+  const input = document.getElementById('email-input');
+  const hint = document.getElementById('email-hint');
+  const email = input.value.trim();
+
+  if (!email) {
+    hint.textContent = 'Введи email';
+    input.classList.add('invalid');
+    input.focus();
+    return;
+  }
+  if (!isValidEmail(email)) {
+    hint.textContent = 'Введи корректный email';
+    input.classList.add('invalid');
+    input.focus();
+    return;
+  }
+  hint.textContent = '';
+  input.classList.remove('invalid');
+
+  setState('loading');
+
+  try {
+    const rows = await fetchRows(email);
+
+    if (rows.length === 0) {
+      setState('notfound');
+      return;
+    }
+
+    const container = document.getElementById('tickets-container');
+    container.innerHTML = '';
+    rows.forEach(row => container.appendChild(renderTicket(row)));
+    document.getElementById('tickets-sub').textContent = pluralEvents(rows.length);
+    setState('tickets');
+
+  } catch (e) {
+    document.getElementById('error-msg').textContent = 'Ошибка загрузки: ' + e.message;
+    setState('error');
+  }
+}
+
+window.addEventListener('load', () => {
+  setTimeout(() => document.getElementById('email-input').focus(), 200);
+});
+</script>
+</body>
+</html>
