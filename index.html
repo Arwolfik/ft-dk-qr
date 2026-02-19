@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<script src="https://unpkg.com/@vkontakte/vk-bridge/dist/browser.min.js"></script>
 <style>
   :root {
     --bg: #F4F4F4;
@@ -501,6 +502,10 @@ async function doSearch() {
 }
 
 window.addEventListener('load', () => {
+  // Инициализация VK Bridge
+  if (window.vkBridge) {
+    vkBridge.send('VKWebAppInit');
+  }
   setTimeout(() => document.getElementById('email-input').focus(), 200);
 });
 </script>
