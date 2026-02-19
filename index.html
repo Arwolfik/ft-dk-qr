@@ -392,15 +392,9 @@ const CD_SCHEDULE = [
   { date: "2026-04-03", url: "https://careerday.fut.ru/profinance_spb",  name: "ProFinance Санкт-Петербург" },
   { date: "2026-04-04", url: "https://careerday.fut.ru/findit_spb",      name: "Найди IT Санкт-Петербург" },
   { date: "2026-04-14", url: "https://careerday.fut.ru/findit_nsk",      name: "Найди IT Новосибирск" },
-  { date: "2025-04-17", url: "https://futuretoday.kz/",                  name: "FutureToday Career Forum" },
+  { date: "2026-04-17", url: "https://futuretoday.kz/",                  name: "FutureToday Career Forum" },
   { date: "2026-04-27", url: "https://careerday.fut.ru/vacancyday",      name: "День открытых вакансий" },
 ];
-
-function getNextEventLink() {
-  const today = new Date().toISOString().slice(0, 10);
-  const next = CD_SCHEDULE.find(e => e.date >= today);
-  return next || null;
-}
 
 const CD_NAMES = {
   "ПФМ":  "ProFinance Москва",
@@ -528,15 +522,15 @@ async function doSearch() {
     const rows = await fetchRows(email);
 
     if (rows.length === 0) {
-      // Обновляем ссылку в зависимости от даты
-      const next = getNextEventLink();
+      const today = new Date().toISOString().slice(0, 10);
+      const todayEvent = CD_SCHEDULE.find(e => e.date === today) || null;
       const link = document.getElementById('register-link');
-      if (next) {
-        link.href = next.url;
-        link.textContent = `Зарегистрироваться на ${next.name} →`;
+      if (todayEvent) {
+        link.href = todayEvent.url;
+        link.textContent = 'Зарегистрироваться на ' + todayEvent.name + ' →';
       } else {
-        link.href = "https://careerday.fut.ru/events";
-        link.textContent = "Все мероприятия →";
+        link.href = 'https://careerday.fut.ru/events';
+        link.textContent = 'Зарегистрироваться →';
       }
       setState('notfound');
       return;
