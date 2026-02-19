@@ -272,6 +272,27 @@
     line-height: 1.5;
   }
 
+  .register-link {
+    display: inline-block;
+    margin-top: 14px;
+    background: var(--orange);
+    color: #fff;
+    text-decoration: none;
+    border-radius: 10px;
+    padding: 11px 20px;
+    font-size: 14px;
+    font-weight: 600;
+    transition: background 0.15s;
+  }
+  .register-link:hover { background: var(--orange-dark); }
+
+  .register-link-sub {
+    display: block;
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 6px;
+  }
+
   .error-card {
     background: #fff5f5;
     border: 1px solid #ffd6d6;
@@ -326,7 +347,10 @@
       <div class="not-found">
         <div class="nf-icon">🤔</div>
         <h2>Билет не найден</h2>
-        <p>По этому email регистрация не найдена.<br/>Проверь адрес или зарегистрируйся на сайте careerday.fut.ru</p>
+        <p>По этому email регистрация не найдена.<br/>Проверь адрес или зарегистрируйся на мероприятие:</p>
+        <a id="register-link" href="https://careerday.fut.ru/events" target="_blank" class="register-link">
+          Зарегистрироваться →
+        </a>
       </div>
       <button class="btn btn-ghost" onclick="goBack()">← Попробовать снова</button>
     </div>
@@ -358,6 +382,25 @@ const BASEROW_TOKEN = "xveiGbETaUaK1ThxvnbgkmMm6lHPlCRm";
 const TABLE_ID = "794";
 const BASEROW_BASE = "https://api-br.fut.ru";
 // ============================================================
+
+// Расписание ивентов: дата → лендинг
+// Показываем ссылку на ближайший будущий (или сегодняшний) ивент
+const CD_SCHEDULE = [
+  { date: "2025-03-11", url: "https://careerday.fut.ru/profinance_msk",  name: "ProFinance Москва" },
+  { date: "2025-03-12", url: "https://careerday.fut.ru/findit_msk",      name: "Найди IT Москва" },
+  { date: "2025-03-21", url: "https://careerday.fut.ru/technocareer",    name: "TechnoCareer" },
+  { date: "2025-04-03", url: "https://careerday.fut.ru/profinance_spb",  name: "ProFinance Санкт-Петербург" },
+  { date: "2025-04-04", url: "https://careerday.fut.ru/findit_spb",      name: "Найди IT Санкт-Петербург" },
+  { date: "2025-04-14", url: "https://careerday.fut.ru/findit_nsk",      name: "Найди IT Новосибирск" },
+  { date: "2025-04-17", url: "https://futuretoday.kz/",                  name: "FutureToday Career Forum" },
+  { date: "2025-04-27", url: "https://careerday.fut.ru/vacancyday",      name: "День открытых вакансий" },
+];
+
+function getNextEventLink() {
+  const today = new Date().toISOString().slice(0, 10);
+  const next = CD_SCHEDULE.find(e => e.date >= today);
+  return next || null;
+}
 
 const CD_NAMES = {
   "ПФМ":  "ProFinance Москва",
@@ -485,6 +528,16 @@ async function doSearch() {
     const rows = await fetchRows(email);
 
     if (rows.length === 0) {
+      // Обновляем ссылку в зависимости от даты
+      const next = getNextEventLink();
+      const link = document.getElementById('register-link');
+      if (next) {
+        link.href = next.url;
+        link.textContent = `Зарегистрироваться на ${next.name} →`;
+      } else {
+        link.href = "https://careerday.fut.ru/events";
+        link.textContent = "Все мероприятия →";
+      }
       setState('notfound');
       return;
     }
