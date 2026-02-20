@@ -7,7 +7,13 @@
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+<!-- VK Bridge -->
 <script src="https://unpkg.com/@vkontakte/vk-bridge/dist/browser.min.js"></script>
+
+<!-- Telegram WebApp -->
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+
 <style>
   :root {
     --bg: #F4F4F4;
@@ -286,13 +292,6 @@
   }
   .register-link:hover { background: var(--orange-dark); }
 
-  .register-link-sub {
-    display: block;
-    font-size: 12px;
-    color: var(--muted);
-    margin-top: 6px;
-  }
-
   .btn-register {
     display: flex;
     align-items: center;
@@ -310,9 +309,7 @@
     text-decoration: none;
     transition: background 0.15s, color 0.15s;
   }
-  .btn-register:hover {
-    background: var(--orange-light);
-  }
+  .btn-register:hover { background: var(--orange-light); }
 
   .error-card {
     background: #fff5f5;
@@ -322,6 +319,17 @@
     color: #c0392b;
     font-size: 14px;
     text-align: center;
+  }
+
+  /* маленький бейдж-подсказка в шапке */
+  .platform-badge{
+    margin-left:auto;
+    font-size:12px;
+    color: var(--muted);
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 6px 10px;
   }
 </style>
 </head>
@@ -333,6 +341,7 @@
     <div class="header-title">Мой билет</div>
     <div class="header-sub">CareerDay от FutureToday</div>
   </div>
+  <div class="platform-badge" id="platform-badge" style="display:none;"></div>
 </div>
 
 <div class="content">
@@ -400,7 +409,7 @@
 
 <script>
 // ============================================================
-// КОНФИГУРАЦИЯ — замени токен на свой Baserow токен
+// КОНФИГУРАЦИЯ — тестовый токен (как ты и просил)
 // ============================================================
 const BASEROW_TOKEN = "xveiGbETaUaK1ThxvnbgkmMm6lHPlCRm";
 const TABLE_ID = "794";
@@ -408,7 +417,6 @@ const BASEROW_BASE = "https://api-br.fut.ru";
 // ============================================================
 
 // Расписание ивентов: дата → лендинг
-// Показываем ссылку на ближайший будущий (или сегодняшний) ивент
 const CD_SCHEDULE = [
   { date: "2026-03-11", url: "https://careerday.fut.ru/profinance_msk",  name: "ProFinance Москва" },
   { date: "2026-03-12", url: "https://careerday.fut.ru/findit_msk",      name: "Найди IT Москва" },
@@ -436,6 +444,85 @@ const CD_ICONS = {
   "ПФС": "💼", "НИТС": "💻", "НИТН": "💻",
   "ДОВ": "🏢", "КЗКФ": "🌟",
 };
+
+// ============================================================
+// ПОДДЕРЖКА VK + TG: определение платформы и интеграции
+// ============================================================
+const Platform = (() => {
+  const hasVK = typeof window.vkBridge !== 'undefined' && window.vkBridge && typeof window.vkBridge.send === 'function';
+  const hasTG = typeof window.Telegram !== 'undefined' && window.Telegram && window.Telegram.WebApp;
+
+  // если вдруг откроют в обоих (редко), приоритет VK внутри VK Mini Apps
+  if (hasVK) return { name: 'vk', badge: 'VK Mini App', vk: window.vkBridge, tg: null };
+  if (hasTG) return { name: 'tg', badge: 'Telegram WebApp', vk: null, tg: window.Telegram.WebApp };
+  return { name: 'web', badge: 'Web', vk: null, tg: null };
+})();
+
+function showPlatformBadge() {
+  const el = document.getElementById('platform-badge');
+  if (!el) return;
+  el.style.display = 'block';
+  el.textContent = Platform.badge;
+}
+
+// Унифицированные утилиты
+async function platformInit() {
+  try {
+    if (Platform.name === 'vk') {
+      await Platform.vk.send('VKWebAppInit');
+    } else if (Platform.name === 'tg') {
+      // Telegram init + визуальные мелочи
+      Platform.tg.ready();
+      Platform.tg.expand();
+      // Можно подсветить тему телеги (не обязательно)
+      // document.body.style.background = Platform.tg.themeParams.bg_color || '';
+    }
+  } catch (e) {
+    // не валим приложение, просто игнорируем
+    console.warn('Platform init error:', e);
+  }
+}
+
+// Открытие ссылок: в VK лучше VKWebAppOpenLink, в TG — openLink, иначе window.open
+async function openExternalLink(url) {
+  try {
+    if (Platform.name === 'vk') {
+      await Platform.vk.send('VKWebAppOpenLink', { url });
+      return;
+    }
+    if (Platform.name === 'tg') {
+      Platform.tg.openLink(url);
+      return;
+    }
+  } catch (e) {
+    console.warn('Open link fallback:', e);
+  }
+  window.open(url, '_blank', 'noopener,noreferrer');
+}
+
+// Для ссылок в разметке — перехватываем клики и открываем правильно
+function attachSmartLink(id) {
+  const a = document.getElementById(id);
+  if (!a) return;
+  a.addEventListener('click', (ev) => {
+    // если обычный веб — пусть работает нативно
+    if (Platform.name === 'web') return;
+    ev.preventDefault();
+    openExternalLink(a.href);
+  });
+}
+
+// Если хочешь — можно автоподставлять email из платформы (не всегда доступно).
+async function tryAutofillEmail() {
+  const input = document.getElementById('email-input');
+  if (!input) return;
+
+  // VK: можно попытаться запросить данные пользователя, но email обычно не отдают.
+  // TG: email не отдают. Поэтому оставляем как есть.
+  return;
+}
+
+// ============================================================
 
 function setState(id) {
   document.querySelectorAll('.state').forEach(el => el.classList.remove('active'));
@@ -572,13 +659,16 @@ async function doSearch() {
   }
 }
 
-window.addEventListener('load', () => {
-  // Инициализация VK Bridge
-  if (window.vkBridge) {
-    vkBridge.send('VKWebAppInit');
-  }
+window.addEventListener('load', async () => {
+  // 1) Инициализация платформы (VK/TG/Web)
+  await platformInit();
+  showPlatformBadge();
 
-  // Кнопка регистрации на главном экране
+  // 2) “умные” внешние ссылки (чтобы корректно открывались в VK/TG)
+  attachSmartLink('register-link-main');
+  attachSmartLink('register-link');
+
+  // 3) Кнопка регистрации на главном экране (с учётом сегодняшней даты)
   const today = new Date().toISOString().slice(0, 10);
   const todayEvent = CD_SCHEDULE.find(e => e.date === today) || null;
   const mainBtn = document.getElementById('register-link-main');
@@ -586,6 +676,9 @@ window.addEventListener('load', () => {
     mainBtn.href = todayEvent.url;
     mainBtn.textContent = 'Зарегистрироваться на ' + todayEvent.name + ' →';
   }
+
+  // 4) (опционально) попытаться автоподставить email (сейчас неоткуда)
+  await tryAutofillEmail();
 
   setTimeout(() => document.getElementById('email-input').focus(), 200);
 });
